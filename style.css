@@ -376,21 +376,21 @@ body.cooking { overflow: hidden; }
   .panel { padding: 16px 14px; }
   .layout { gap: 12px; }
 
-  /* 레시피 목록을 가로 스크롤 칩으로 */
+  /* 레시피 목록: 2열 격자로 한 화면에 모두 표시 */
   .sidebar { padding: 10px 12px; }
-  .sidebar-head { margin-bottom: 6px; }
-  .recipe-list {
-    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
-    scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch;
-  }
+  .sidebar-head { margin-bottom: 4px; }
+  .recipe-list { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
   .recipe-list li {
-    flex: 0 0 auto; max-width: 240px; scroll-snap-align: start;
-    border: 1px solid var(--line); margin: 0; padding: 8px 12px; font-size: .9rem;
+    border: 1px solid var(--line); margin: 0; padding: 7px 10px; font-size: .88rem; line-height: 1.35;
+    min-width: 0; word-break: keep-all;
   }
-  .recipe-list li.group { border: 0; padding: 8px 2px; align-self: center; }
-  .recipe-list li.muted { border-style: dashed; white-space: normal; max-width: 180px; }
-  .recipe-list li small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .recipe-list li[data-id] { white-space: nowrap; }
+  .recipe-list .rname { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .recipe-list li.group { grid-column: 1 / -1; border: 0; padding: 6px 2px 0; display: block; }
+  .recipe-list li.cmp-item { grid-column: 1 / -1; }
+  .recipe-list li.muted { grid-column: 1 / -1; border-style: dashed; display: block; }
+  .recipe-list li small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .recipe-list li .firm { display: flex; margin: 0 0 3px; }
+  .recipe-list li.cmp-item small { display: inline; margin-left: 6px; }
   .hero { flex-wrap: wrap; gap: 10px; padding: 12px; }
   .hero .tofu-mini { width: 64px; flex-basis: 64px; }
   .hero-body { flex-basis: 100%; }

@@ -59,7 +59,7 @@
     if (!state.recipes.length) { ul.innerHTML = '<li class="muted">레시피가 없습니다</li>'; return; }
     const item = (r) => `
       <li data-id="${esc(r.id)}" class="${r.id === selectedId ? 'active' : ''}">
-        ${r.profile ? firmBar(r.profile.firmness) : ''}${esc(r.builtin ? r.name.replace(/\s*\(콩 1말 기준\)$/, '') : r.name)}<small>콩 ${fmt(r.soyKg, 1)}kg · ${esc(r.coagulant || '응고제 미지정')}${r.builtin ? '' : ' · v' + esc(r.version || 1)}</small>
+        ${r.profile ? firmBar(r.profile.firmness) : ''}<span class="rname">${esc(r.name.replace(/\s*\(콩 1말 기준\)/g, ''))}</span><small>콩 ${fmt(r.soyKg, 1)}kg · ${esc(r.coagulant || '응고제 미지정')}${r.builtin ? '' : ' · v' + esc(r.version || 1)}</small>
       </li>`;
     const std = state.recipes.filter((r) => r.builtin);
     const own = state.recipes.filter((r) => !r.builtin);
@@ -70,6 +70,7 @@
       `<li class="group">🧪 연구 레시피</li>${own.map(item).join('') || '<li class="muted small-note">표준 레시피에서 "연구 시작"을 누르세요</li>'}`;
     $$('li[data-id]', ul).forEach((li) => li.addEventListener('click', () => {
       selectedId = li.dataset.id; renderList(); renderDetail();
+      if (innerWidth <= 760) $('#recipe-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }));
   }
 
