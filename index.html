@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>두부 레시피 관리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="logo">豆腐 <span>두부 레시피 관리</span></h1>
+    <nav class="tabs">
+      <button data-tab="recipes" class="active">레시피</button>
+      <button data-tab="calc">배합 계산기</button>
+      <button data-tab="batches">제조 기록</button>
+      <button data-tab="settings">백업</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 레시피 목록 / 상세 -->
+    <section id="tab-recipes" class="tab active">
+      <div class="layout">
+        <aside class="sidebar">
+          <div class="sidebar-head">
+            <h2>레시피 목록</h2>
+            <button class="btn small" id="btn-new-recipe">+ 새 레시피</button>
+          </div>
+          <ul id="recipe-list" class="recipe-list"></ul>
+        </aside>
+        <article id="recipe-detail" class="panel"></article>
+      </div>
+    </section>
+
+    <!-- 배합 계산기 -->
+    <section id="tab-calc" class="tab">
+      <div class="panel">
+        <h2>배합 계산기</h2>
+        <p class="muted">레시피를 고르고 콩 양을 입력하면 모든 재료와 응고제 양이 비례 계산됩니다. (1말 = 8kg)</p>
+        <div class="form-row">
+          <label>레시피
+            <select id="calc-recipe"></select>
+          </label>
+          <label>콩 양 (kg)
+            <input type="number" id="calc-soy" value="8" min="0.1" step="0.1">
+          </label>
+          <div class="quick">
+            <button class="btn ghost small" data-soy="2">2kg (반되)</button>
+            <button class="btn ghost small" data-soy="4">4kg (반말)</button>
+            <button class="btn ghost small" data-soy="8">8kg (1말)</button>
+            <button class="btn ghost small" data-soy="16">16kg (2말)</button>
+          </div>
+        </div>
+        <div id="calc-result"></div>
+      </div>
+    </section>
+
+    <!-- 제조 기록 -->
+    <section id="tab-batches" class="tab">
+      <div class="panel">
+        <h2>제조 기록</h2>
+        <form id="batch-form" class="grid-form">
+          <label>날짜 <input type="date" name="date" required></label>
+          <label>레시피 <select name="recipeId" id="batch-recipe"></select></label>
+          <label>콩 (kg) <input type="number" name="soyKg" step="0.1" value="8" required></label>
+          <label class="wide">실험 변수 (이번에 바꾼 것) <input type="text" name="variable" placeholder="예: 간수 10% 증량"></label>
+          <label>불림 시간 (h) <input type="number" name="soakHours" step="0.5"></label>
+          <label>물 온도 (℃) <input type="number" name="waterTemp" step="0.5"></label>
+          <label>두유 Brix <input type="number" name="brix" step="0.1"></label>
+          <label>응고 온도 (℃) <input type="number" name="coagTemp" step="1"></label>
+          <label>응고제 사용량 <input type="text" name="coagAmount" placeholder="예: 간수 1.2L"></label>
+          <label>두부 수율 (kg) <input type="number" name="yieldKg" step="0.1"></label>
+          <label>평가
+            <select name="rating">
+              <option value="5">★★★★★</option>
+              <option value="4" selected>★★★★</option>
+              <option value="3">★★★</option>
+              <option value="2">★★</option>
+              <option value="1">★</option>
+            </select>
+          </label>
+          <label class="full">메모 <textarea name="notes" rows="2" placeholder="식감, 문제점, 다음에 바꿀 점"></textarea></label>
+          <div class="full actions"><button class="btn" type="submit">기록 저장</button></div>
+        </form>
+        <div id="batch-stats" class="stats"></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>날짜</th><th>레시피</th><th>콩</th><th>Brix</th><th>응고℃</th><th>수율</th><th>수율비</th><th>평가</th><th>메모</th><th></th></tr>
+            </thead>
+            <tbody id="batch-list"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 백업 -->
+    <section id="tab-settings" class="tab">
+      <div class="panel">
+        <h2>백업 / 복원</h2>
+        <p class="muted">데이터는 이 브라우저(localStorage)에 저장됩니다. 다른 기기로 옮기거나 백업하려면 JSON으로 내보내세요.</p>
+        <div class="actions">
+          <button class="btn" id="btn-export">JSON 내보내기</button>
+          <label class="btn ghost file-btn">JSON 가져오기<input type="file" id="file-import" accept="application/json" hidden></label>
+          <button class="btn danger" id="btn-reset">기본 레시피로 초기화</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 레시피 편집 모달 -->
+  <dialog id="recipe-dialog">
+    <form id="recipe-form" method="dialog">
+      <h2 id="recipe-dialog-title">레시피 편집</h2>
+      <div class="grid-form">
+        <label class="full">이름 <input name="name" required></label>
+        <label>기준 콩 양 (kg) <input type="number" name="soyKg" step="0.1" value="8" required></label>
+        <label>응고제 <input name="coagulant" placeholder="예: 천연간수"></label>
+        <label>예상 수율 (kg) <input type="number" name="expectedYieldKg" step="0.1"></label>
+      </div>
+      <h3>재료 <button type="button" class="btn ghost small" data-add="ingredient">+ 추가</button></h3>
+      <div id="ing-rows" class="rows"></div>
+      <h3>공정 단계 <button type="button" class="btn ghost small" data-add="step">+ 추가</button></h3>
+      <div id="step-rows" class="rows"></div>
+      <label class="full">팁 (한 줄에 하나)<textarea name="tips" rows="3"></textarea></label>
+      <label class="full" id="change-note-wrap">변경 사유 (연구 이력에 기록)
+        <input name="changeNote" placeholder="예: 응고 온도 80℃→75℃로 낮춤 — 2026-09-20 기록에서 식감 개선 확인"></label>
+      <div class="actions end">
+        <button type="button" class="btn ghost" id="btn-cancel">취소</button>
+        <button type="submit" class="btn" value="save">저장</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="footer">콩 1말(8kg) 기준 두부 레시피 관리 · 데이터는 브라우저에만 저장됩니다</footer>
+  <script src="data/standard-recipes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
