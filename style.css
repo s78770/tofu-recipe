@@ -188,6 +188,127 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
 .empty { color: var(--muted); text-align: center; padding: 40px 0; }
 .footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 20px; }
 
+/* ---------- 그림 레시피 ---------- */
+:root { --art-bg: #fbf5e6; --hot: #c4552f; --hot-bg: #fbe6dc; }
+@media (prefers-color-scheme: dark) { :root { --art-bg: #efe6d2; --hot: #f09a7a; --hot-bg: #43291f; } }
+.art { display: block; width: 100%; height: auto; }
+
+.view-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 6px; }
+.seg { display: inline-flex; background: var(--soft); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; color: var(--muted); font: inherit; font-size: .9rem; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.seg button.on { background: var(--surface); color: var(--ink); font-weight: 700; box-shadow: var(--shadow); }
+
+.firm { display: inline-flex; gap: 2px; vertical-align: middle; margin-right: 6px; }
+.firm i { width: 7px; height: 12px; border-radius: 2px; background: var(--line); }
+.firm i.on { background: var(--accent); }
+.recipe-list li.active .firm i { background: rgba(255, 255, 255, .35); }
+.recipe-list li.active .firm i.on { background: var(--accent-ink); }
+.hero-grid .firm i { width: 12px; height: 16px; }
+
+.hero { display: flex; gap: 16px; align-items: center; background: var(--soft); border-radius: 12px; padding: 14px 16px; margin: 10px 0; }
+.hero .tofu-mini { width: 84px; flex: 0 0 84px; background: var(--art-bg); border-radius: 10px; padding: 6px; }
+.hero-body { flex: 1; min-width: 0; }
+.hero-sum { margin: 0 0 8px; font-weight: 500; }
+.hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 16px; font-size: .88rem; }
+.hero-grid > div > span:first-child { display: block; color: var(--muted); font-size: .76rem; }
+
+.flow { display: flex; align-items: stretch; gap: 2px; overflow-x: auto; padding: 8px 2px 10px; margin: 8px 0; scroll-snap-type: x proximity; }
+.flow-item {
+  flex: 0 0 84px; position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 6px 4px;
+  font: inherit; color: var(--ink); cursor: pointer; scroll-snap-align: start;
+}
+.flow-item:hover { border-color: var(--accent); }
+.flow-item .art.mini { width: 64px; background: var(--art-bg); border-radius: 8px; }
+.flow-no { position: absolute; top: 2px; left: 4px; font-size: .7rem; font-weight: 700; color: var(--accent); }
+.flow-t { font-size: .74rem; line-height: 1.25; text-align: center; word-break: keep-all; }
+.flow-m { font-size: .68rem; color: var(--muted); }
+.flow-arrow { align-self: center; color: var(--muted); font-size: 1.2rem; }
+
+.ing-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.ing-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; background: var(--surface); }
+.ing-ic { font-size: 1.5rem; line-height: 1; }
+.ing-amt { font-size: 1.45rem; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.ing-amt small, .coag-card b small { font-size: .8rem; margin-left: 2px; color: var(--muted); font-weight: 500; }
+.ing-name { font-size: .88rem; font-weight: 500; }
+details { font-size: .8rem; color: var(--muted); }
+details summary { cursor: pointer; color: var(--accent); }
+
+.coag-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+.coag-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.coag-card.main { border: 2px solid var(--accent); background: var(--soft); }
+.coag-card.main .coag-name::after { content: ' · 기본'; color: var(--accent); font-weight: 700; }
+.coag-name { font-size: .82rem; }
+.coag-card b { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+
+.chips-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.chips-row.center { justify-content: center; }
+.chip-t { display: inline-block; background: var(--soft); border-radius: 999px; padding: 2px 10px; font-size: .8rem; font-weight: 500; width: fit-content; }
+.chip-t.hot { background: var(--hot-bg); color: var(--hot); }
+.chip-t.big { font-size: 1rem; padding: 4px 14px; }
+
+.step-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.step-card {
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface);
+  cursor: pointer; transition: transform .12s, box-shadow .12s; display: flex; flex-direction: column;
+}
+.step-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(60, 45, 20, .1); }
+.step-card.done { opacity: .55; }
+.step-art { position: relative; background: var(--art-bg); padding: 10px 24px 4px; }
+.step-no {
+  position: absolute; top: 8px; left: 8px; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700;
+}
+.step-done {
+  position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 50%;
+  background: #4f8a3a; color: #fff; display: grid; place-items: center; font-weight: 700;
+}
+.step-body { padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
+.step-body h4 { margin: 0; font-size: 1.05rem; font-family: "Noto Serif KR", serif; }
+.step-key { margin: 0; font-weight: 700; color: var(--ink); background: var(--soft); border-radius: 8px; padding: 6px 10px; font-size: .9rem; }
+.step-detail { margin: 0; font-size: .85rem; color: var(--muted); }
+.steps .step-key { margin: 4px 0; }
+
+.cmp-item { font-weight: 700; }
+.cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }
+.cmp-col { border: 1px solid var(--line); border-radius: 12px; padding: 14px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+.cmp-col:hover { border-color: var(--accent); }
+.cmp-col .tofu-mini { width: 100px; background: var(--art-bg); border-radius: 10px; padding: 6px; }
+.cmp-col h4 { margin: 0; font-size: 1.1rem; font-family: "Noto Serif KR", serif; }
+.cmp-tex { margin: 0; font-size: .85rem; }
+.cmp-yield b { font-size: 1.4rem; margin-right: 6px; }
+.cmp-yield span { font-size: .8rem; color: var(--muted); }
+.cmp dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 4px 0 8px; font-size: .84rem; }
+.cmp dt { color: var(--muted); }
+.cmp dd { margin: 0; font-weight: 500; }
+.cmp-col .btn { margin-top: auto; align-self: flex-start; }
+
+/* 작업 모드 */
+body.cooking { overflow: hidden; }
+.cook {
+  position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+.cook-top { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.cook-x { border: 0; background: none; font-size: 1.4rem; color: var(--ink); cursor: pointer; width: 40px; height: 40px; }
+.cook-prog { flex: 1; height: 8px; background: var(--soft); border-radius: 999px; overflow: hidden; }
+.cook-prog i { display: block; height: 100%; background: var(--accent); transition: width .2s; }
+.cook-count { font-variant-numeric: tabular-nums; font-weight: 700; }
+.cook-main { flex: 1; overflow-y: auto; padding: 16px; max-width: 640px; width: 100%; margin: 0 auto; text-align: center; }
+.cook-art { background: var(--art-bg); border-radius: 16px; padding: 12px 40px; max-width: 420px; margin: 0 auto 12px; }
+.cook-title { font-size: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+.cook-title span { background: var(--accent); color: var(--accent-ink); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 1.1rem; flex: 0 0 36px; }
+.cook-key { font-size: 1.15rem; font-weight: 700; background: var(--soft); border-radius: 12px; padding: 12px 14px; margin: 14px 0 10px; }
+.cook-detail { color: var(--muted); text-align: left; line-height: 1.7; }
+.timer { margin: 16px 0; }
+.timer-face { font-size: 3.2rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.timer-face.ring { color: var(--hot); animation: ring .6s ease-in-out 6; }
+@keyframes ring { 50% { transform: scale(1.08); } }
+.actions.center { justify-content: center; }
+.cook-nav { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--line); background: var(--surface); }
+.cook-nav .btn { justify-content: center; min-height: 52px; font-size: 1.05rem; }
+.cook-nav .btn:disabled { opacity: .35; cursor: default; }
+
 /* ---------- 연구 노하우 ---------- */
 .note-form { border: 1px solid var(--accent); border-radius: 8px; padding: 14px; background: var(--soft); }
 .note-form[hidden] { display: none; }
@@ -269,6 +390,20 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
   .recipe-list li.group { border: 0; padding: 8px 2px; align-self: center; }
   .recipe-list li.muted { border-style: dashed; white-space: normal; max-width: 180px; }
   .recipe-list li small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recipe-list li[data-id] { white-space: nowrap; }
+  .hero { flex-wrap: wrap; gap: 10px; padding: 12px; }
+  .hero .tofu-mini { width: 64px; flex-basis: 64px; }
+  .hero-body { flex-basis: 100%; }
+  .hero-grid { grid-template-columns: 1fr 1fr; }
+  .view-bar { flex-wrap: nowrap; }
+  .view-bar .btn { flex: 0 0 auto; white-space: nowrap; padding: 8px 12px; }
+  .seg button { padding: 6px 10px; font-size: .85rem; white-space: nowrap; }
+  .step-cards { grid-template-columns: 1fr; }
+  .step-art { padding: 8px 60px 2px; }
+  .ing-cards { grid-template-columns: 1fr 1fr; }
+  .coag-cards { grid-template-columns: 1fr 1fr; }
+  .cook-title { font-size: 1.3rem; }
+  .timer-face { font-size: 2.8rem; }
 
   h2 { font-size: 1.15rem; }
   .detail-head .actions { width: 100%; }

@@ -1,5 +1,4 @@
-// 표준 레시피 3종 — research/recipe-3types.json 기반. 수정하면 모든 사용자에게 반영됩니다.
-window.DEFAULT_RECIPES = [
+[
   {
     "id": "std-soft-8kg",
     "name": "부드러운 두부 (콩 1말 기준)",
@@ -699,4 +698,4 @@ window.DEFAULT_RECIPES = [
       "https://www.nongmin.com/article/20111121011240"
     ]
   }
-];
+]

@@ -1,6 +1,6 @@
 // 네트워크 우선, 실패 시 캐시 — 업데이트는 바로 반영되고 오프라인(작업장)에서도 열림
-const CACHE = 'tofu-recipe-v2';
-const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'data/standard-recipes.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png'];
+const CACHE = 'tofu-recipe-v3';
+const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'illustrations.js', 'data/standard-recipes.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

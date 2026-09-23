@@ -59,12 +59,14 @@
     if (!state.recipes.length) { ul.innerHTML = '<li class="muted">레시피가 없습니다</li>'; return; }
     const item = (r) => `
       <li data-id="${esc(r.id)}" class="${r.id === selectedId ? 'active' : ''}">
-        ${esc(r.name)}<small>콩 ${fmt(r.soyKg, 1)}kg · ${esc(r.coagulant || '응고제 미지정')}${r.builtin ? '' : ' · v' + esc(r.version || 1)}</small>
+        ${r.profile ? firmBar(r.profile.firmness) : ''}${esc(r.builtin ? r.name.replace(/\s*\(콩 1말 기준\)$/, '') : r.name)}<small>콩 ${fmt(r.soyKg, 1)}kg · ${esc(r.coagulant || '응고제 미지정')}${r.builtin ? '' : ' · v' + esc(r.version || 1)}</small>
       </li>`;
     const std = state.recipes.filter((r) => r.builtin);
     const own = state.recipes.filter((r) => !r.builtin);
+    const cmp = std.filter((r) => r.profile).length >= 2
+      ? `<li data-id="__compare" class="cmp-item ${selectedId === '__compare' ? 'active' : ''}">⚖️ 3종 한눈에 비교<small>부드러운 · 판두부 · 손두부</small></li>` : '';
     ul.innerHTML =
-      `<li class="group">📘 표준 레시피</li>${std.map(item).join('') || '<li class="muted">없음</li>'}` +
+      `<li class="group">📘 표준 레시피</li>${cmp}${std.map(item).join('') || '<li class="muted">없음</li>'}` +
       `<li class="group">🧪 연구 레시피</li>${own.map(item).join('') || '<li class="muted small-note">표준 레시피에서 "연구 시작"을 누르세요</li>'}`;
     $$('li[data-id]', ul).forEach((li) => li.addEventListener('click', () => {
       selectedId = li.dataset.id; renderList(); renderDetail();
@@ -127,8 +129,225 @@
         </tr>`).join('')}</tbody></table></div>`;
   }
 
+  // ---------- 그림 레시피 ----------
+  const Art = window.TofuArt;
+  let view = 'pic';
+  try { view = localStorage.getItem('tofu-view') || 'pic'; } catch (e) { /* 무시 */ }
+
+  const TYPE_LABEL = { soft: '부드러운 두부', market: '시장 판두부', firm: '전통 손두부' };
+  const firmBar = (n) => `<span class="firm" title="경도 ${n}/5">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`;
+
+  function profileHero(r) {
+    const p = r.profile || (r.baseId && getRecipe(r.baseId)?.profile);
+    if (!p && !r.summary) return '';
+    return `<div class="hero">
+      ${Art.tofu(p?.firmness || 3)}
+      <div class="hero-body">
+        ${r.summary ? `<p class="hero-sum">${esc(r.summary)}</p>` : ''}
+        ${p ? `<div class="hero-grid">
+          <div><span>경도</span>${firmBar(p.firmness || 3)}</div>
+          ${p.texture ? `<div><span>식감</span><b>${esc(p.texture)}</b></div>` : ''}
+          ${p.uses ? `<div><span>용도</span><b>${esc(p.uses)}</b></div>` : ''}
+          ${p.moisturePct ? `<div><span>수분</span><b>${esc(p.moisturePct)}</b></div>` : ''}
+        </div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function flowStrip(r) {
+    if (!r.steps?.length) return '';
+    return `<div class="flow" aria-label="공정 흐름">${r.steps.map((s, i) => `
+      <button class="flow-item" data-flow="${i}">
+        ${Art.svg(Art.guessIcon(s), 'mini')}
+        <span class="flow-no">${i + 1}</span>
+        <span class="flow-t">${esc(s.title)}</span>
+        ${s.minutes ? `<span class="flow-m">${esc(fmtMin(s.minutes))}</span>` : ''}
+      </button>`).join('<span class="flow-arrow">›</span>')}</div>`;
+  }
+
+  function fmtMin(m) {
+    m = Number(m) || 0;
+    if (m >= 60) return `${Math.floor(m / 60)}시간${m % 60 ? ' ' + (m % 60) + '분' : ''}`;
+    return `${m}분`;
+  }
+
+  const ING_ICON = [[/콩|대두|백태/, '🫘'], [/간수|마그네슘|황산|GDL|응고/i, '🧂'], [/기름|소포/, '🫗'], [/물/, '💧']];
+  function ingredientCards(r) {
+    if (!r.ingredients?.length) return '<p class="muted">재료 없음</p>';
+    return `<div class="ing-cards">${r.ingredients.map((i) => `
+      <div class="ing-card">
+        <span class="ing-ic">${(ING_ICON.find(([re]) => re.test(i.name)) || [, '🥣'])[1]}</span>
+        <b class="ing-amt">${fmt(i.amount)}<small>${esc(i.unit)}</small></b>
+        <span class="ing-name">${esc(i.name)}</span>
+        ${i.note ? `<details><summary>메모</summary>${esc(i.note)}</details>` : ''}
+      </div>`).join('')}</div>`;
+  }
+
+  function coagCards(r) {
+    if (!r.coagulantOptions?.length) return '';
+    return `<h3>응고제 선택 <span class="muted">콩 ${fmt(r.soyKg, 1)}kg 기준</span></h3>
+      <div class="coag-cards">${r.coagulantOptions.map((c) => `
+        <div class="coag-card ${r.coagulant && c.name.includes(r.coagulant.slice(0, 2)) ? 'main' : ''}">
+          <span class="coag-name">${esc(c.name)}</span>
+          <b>${fmt(Number(c.amountPerKgSoy) * r.soyKg, 1)}<small>${esc(c.unit)}</small></b>
+          <span class="chip-t">🌡 ${esc(c.addTempC)}${/℃/.test(c.addTempC || '') ? '' : '℃'}</span>
+          ${c.dilution ? `<details><summary>희석 방법</summary>${esc(c.dilution)}</details>` : ''}
+        </div>`).join('')}</div>`;
+  }
+
+  function stepCards(r, done) {
+    return `<div class="step-cards">${(r.steps || []).map((s, i) => `
+      <article class="step-card ${done.has(i) ? 'done' : ''}" data-card-step="${i}">
+        <div class="step-art">${Art.svg(Art.guessIcon(s))}<span class="step-no">${i + 1}</span>${done.has(i) ? '<span class="step-done">✓</span>' : ''}</div>
+        <div class="step-body">
+          <h4>${esc(s.title)}</h4>
+          <div class="chips-row">
+            ${s.minutes ? `<span class="chip-t">⏱ ${esc(fmtMin(s.minutes))}</span>` : ''}
+            ${s.temp ? `<span class="chip-t hot">🌡 ${esc(s.temp)}</span>` : ''}
+          </div>
+          ${s.key ? `<p class="step-key">👉 ${esc(s.key)}</p>` : ''}
+          ${s.detail ? `<p class="step-detail">${esc(s.detail)}</p>` : ''}
+        </div>
+      </article>`).join('')}</div>`;
+  }
+
+  // 표준 3종 비교
+  function renderCompare(box) {
+    const list = state.recipes.filter((r) => r.builtin && r.profile);
+    const rows = [
+      ['물 (콩 대비)', (p) => p.waterRatio], ['두유 Brix', (p) => p.brix], ['응고제 양', (p) => p.coagAmount],
+      ['응고 온도', (p) => p.coagTempC], ['압착 무게', (p) => p.pressKg], ['압착 시간', (p) => p.pressMin],
+      ['수분', (p) => p.moisturePct], ['용도', (p) => p.uses],
+    ];
+    box.innerHTML = `
+      <h2>⚖️ 표준 두부 ${list.length}종 비교</h2>
+      <p class="muted">같은 콩 1말로도 물의 양, 응고제, 누르는 힘에 따라 두부가 달라집니다.</p>
+      <div class="cmp">${list.map((r) => `
+        <div class="cmp-col" data-open="${esc(r.id)}">
+          ${Art.tofu(r.profile.firmness)}
+          <h4>${esc(TYPE_LABEL[r.type] || r.name)}</h4>
+          ${firmBar(r.profile.firmness)}
+          <p class="muted cmp-tex">${esc(r.profile.texture || '')}</p>
+          <div class="cmp-yield"><b>${fmt(r.expectedYieldKg, 1)}kg</b><span>예상 수율</span></div>
+          <dl>${rows.map(([k, f]) => f(r.profile) ? `<dt>${esc(k)}</dt><dd>${esc(f(r.profile))}</dd>` : '').join('')}</dl>
+          <button class="btn small">레시피 보기 ›</button>
+        </div>`).join('')}</div>`;
+    $$('[data-open]', box).forEach((c) => c.onclick = () => { selectedId = c.dataset.open; renderList(); renderDetail(); box.scrollIntoView({ block: 'start' }); });
+  }
+
+  // ---------- 작업 모드 (한 단계씩 크게, 타이머) ----------
+  let cook = null;
+  function openCook(r) {
+    cook = { r, i: 0, left: 0, total: 0, timer: null, wake: null };
+    let el = $('#cook');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'cook';
+      el.className = 'cook';
+      document.body.append(el);
+    }
+    el.hidden = false;
+    document.body.classList.add('cooking');
+    if ('wakeLock' in navigator) navigator.wakeLock.request('screen').then((w) => { cook.wake = w; }).catch(() => {});
+    history.pushState({ cook: 1 }, '');
+    renderCook();
+  }
+  function closeCook(fromPop) {
+    if (!cook) return;
+    clearInterval(cook.timer);
+    cook.wake?.release?.().catch(() => {});
+    cook = null;
+    $('#cook').hidden = true;
+    document.body.classList.remove('cooking');
+    if (!fromPop && history.state?.cook) history.back();
+    renderDetail();
+  }
+  window.addEventListener('popstate', () => { if (cook) closeCook(true); });
+
+  function renderCook() {
+    const { r, i } = cook;
+    const s = r.steps[i];
+    const n = r.steps.length;
+    clearInterval(cook.timer); cook.timer = null;
+    cook.total = cook.left = (Number(s.minutes) || 0) * 60;
+    $('#cook').innerHTML = `
+      <div class="cook-top">
+        <button class="cook-x" id="ck-close" aria-label="닫기">✕</button>
+        <div class="cook-prog"><i style="width:${((i + 1) / n) * 100}%"></i></div>
+        <span class="cook-count">${i + 1} / ${n}</span>
+      </div>
+      <div class="cook-main">
+        <div class="cook-art">${Art.svg(Art.guessIcon(s))}</div>
+        <h2 class="cook-title"><span>${i + 1}</span>${esc(s.title)}</h2>
+        <div class="chips-row center">
+          ${s.minutes ? `<span class="chip-t big">⏱ ${esc(fmtMin(s.minutes))}</span>` : ''}
+          ${s.temp ? `<span class="chip-t hot big">🌡 ${esc(s.temp)}</span>` : ''}
+        </div>
+        ${s.key ? `<p class="cook-key">👉 ${esc(s.key)}</p>` : ''}
+        ${s.detail ? `<p class="cook-detail">${esc(s.detail)}</p>` : ''}
+        ${s.minutes && s.minutes <= 180 ? `
+          <div class="timer">
+            <div class="timer-face" id="ck-face">${clockText(cook.left)}</div>
+            <div class="actions center">
+              <button class="btn" id="ck-start">▶ 타이머 시작</button>
+              <button class="btn ghost" id="ck-reset">↺</button>
+            </div>
+          </div>` : ''}
+      </div>
+      <div class="cook-nav">
+        <button class="btn ghost" id="ck-prev" ${i === 0 ? 'disabled' : ''}>‹ 이전</button>
+        <button class="btn" id="ck-next">${i === n - 1 ? '완료 ✓' : '다음 ›'}</button>
+      </div>`;
+    $('#ck-close').onclick = () => closeCook();
+    $('#ck-prev').onclick = () => { if (cook.i > 0) { cook.i--; renderCook(); } };
+    $('#ck-next').onclick = () => {
+      const set = new Set(r._done || []); set.add(cook.i); r._done = [...set]; save();
+      if (cook.i < n - 1) { cook.i++; renderCook(); } else closeCook();
+    };
+    if ($('#ck-start')) {
+      $('#ck-start').onclick = () => {
+        if (cook.timer) { clearInterval(cook.timer); cook.timer = null; $('#ck-start').textContent = '▶ 계속'; return; }
+        if (cook.left <= 0) cook.left = cook.total;
+        $('#ck-start').textContent = '⏸ 일시정지';
+        cook.timer = setInterval(() => {
+          cook.left--;
+          $('#ck-face').textContent = clockText(cook.left);
+          if (cook.left <= 0) {
+            clearInterval(cook.timer); cook.timer = null;
+            $('#ck-face').classList.add('ring');
+            $('#ck-start').textContent = '▶ 다시';
+            alarm();
+          }
+        }, 1000);
+      };
+      $('#ck-reset').onclick = () => {
+        clearInterval(cook.timer); cook.timer = null; cook.left = cook.total;
+        $('#ck-face').textContent = clockText(cook.left); $('#ck-face').classList.remove('ring');
+        $('#ck-start').textContent = '▶ 타이머 시작';
+      };
+    }
+  }
+  const clockText = (sec) => {
+    sec = Math.max(0, sec);
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+  };
+  function alarm() {
+    try { navigator.vibrate?.([400, 200, 400, 200, 400]); } catch (e) { /* 무시 */ }
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.35, 0.7].forEach((t) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.25, ctx.currentTime + t); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.3);
+        o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.3);
+      });
+    } catch (e) { /* 무시 */ }
+  }
+
   function renderDetail() {
     const box = $('#recipe-detail');
+    if (selectedId === '__compare') { renderCompare(box); return; }
     const r = getRecipe(selectedId);
     if (!r) { box.innerHTML = '<p class="empty">왼쪽에서 레시피를 선택하거나 새로 만드세요.</p>'; return; }
     const totalMin = (r.steps || []).reduce((s, x) => s + (Number(x.minutes) || 0), 0);
@@ -156,7 +375,7 @@
           <button class="btn ghost small" id="d-print">인쇄</button>
           <button class="btn ${r.builtin ? '' : 'ghost'} small" id="d-dup">${r.builtin ? '🧪 이 표준으로 연구 시작' : '복제'}</button>
           ${r.builtin ? '' : '<button class="btn ghost small" id="d-edit">편집(개정)</button>'}
-          <button class="btn danger small" id="d-del">삭제</button>
+          ${r.builtin ? '' : '<button class="btn danger small" id="d-del">삭제</button>'}
         </div>
       </div>
 
@@ -175,20 +394,39 @@
         ${bestBatch.notes ? `<div class="muted">${esc(bestBatch.notes)}</div>` : ''}
       </div>` : ''}
 
-      <h3>재료</h3>
-      ${ingredientsTable(r, r.soyKg)}
-      ${coagTable(r, r.soyKg)}
+      <div class="view-bar no-print">
+        <div class="seg" role="tablist">
+          <button class="${view === 'pic' ? 'on' : ''}" data-view="pic">🖼 그림 레시피</button>
+          <button class="${view === 'table' ? 'on' : ''}" data-view="table">📋 상세 표</button>
+        </div>
+        ${r.steps?.length ? '<button class="btn" id="d-cook">▶ 작업 모드</button>' : ''}
+      </div>
 
-      <h3>공정 <button class="btn ghost small no-print" id="d-reset-steps">체크 초기화</button></h3>
-      <ol class="steps">${(r.steps || []).map((s, idx) => `
-        <li class="${done.has(idx) ? 'done' : ''}">
-          <label class="chk no-print"><input type="checkbox" data-step="${idx}" ${done.has(idx) ? 'checked' : ''}></label>
-          <strong>${esc(s.title)}</strong>
-          ${s.minutes ? `<span class="step-meta">⏱ ${esc(s.minutes)}분</span>` : ''}
-          ${s.temp ? `<span class="step-meta">🌡 ${esc(s.temp)}</span>` : ''}
-          <div>${esc(s.detail)}</div>
-        </li>`).join('')}
-      </ol>
+      ${view === 'pic' ? `
+        ${profileHero(r)}
+        ${flowStrip(r)}
+        <h3>재료 <span class="muted">콩 ${fmt(r.soyKg, 1)}kg 기준</span></h3>
+        ${ingredientCards(r)}
+        ${coagCards(r)}
+        <h3>공정 <span class="muted">카드를 누르면 완료 표시</span> <button class="btn ghost small no-print" id="d-reset-steps">초기화</button></h3>
+        ${stepCards(r, done)}
+      ` : `
+        <h3>재료</h3>
+        ${ingredientsTable(r, r.soyKg)}
+        ${coagTable(r, r.soyKg)}
+
+        <h3>공정 <button class="btn ghost small no-print" id="d-reset-steps">체크 초기화</button></h3>
+        <ol class="steps">${(r.steps || []).map((s, idx) => `
+          <li class="${done.has(idx) ? 'done' : ''}">
+            <label class="chk no-print"><input type="checkbox" data-step="${idx}" ${done.has(idx) ? 'checked' : ''}></label>
+            <strong>${esc(s.title)}</strong>
+            ${s.minutes ? `<span class="step-meta">⏱ ${esc(s.minutes)}분</span>` : ''}
+            ${s.temp ? `<span class="step-meta">🌡 ${esc(s.temp)}</span>` : ''}
+            ${s.key ? `<div class="step-key">👉 ${esc(s.key)}</div>` : ''}
+            <div>${esc(s.detail)}</div>
+          </li>`).join('')}
+        </ol>
+      `}
 
       ${r.tips?.length ? `<h3>팁</h3><ul class="tips">${r.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
 
@@ -230,13 +468,28 @@
       r.bestBatchId = r.bestBatchId === btn.dataset.best ? null : btn.dataset.best;
       save(); renderDetail();
     }));
-    $('#d-del').onclick = () => {
-      if (r.builtin) { alert('표준 레시피는 삭제할 수 없습니다. data/standard-recipes.js 에서 관리합니다.'); return; }
+    if ($('#d-del')) $('#d-del').onclick = () => {
       if (!confirm(`"${r.name}" 레시피를 삭제할까요?`)) return;
       state.recipes = state.recipes.filter((x) => x.id !== r.id);
       selectedId = state.recipes[0]?.id || null; save(); refresh();
     };
     $('#d-reset-steps').onclick = () => { r._done = []; save(); renderDetail(); };
+    $$('[data-view]', box).forEach((b) => b.onclick = () => {
+      view = b.dataset.view;
+      try { localStorage.setItem('tofu-view', view); } catch (e) { /* 무시 */ }
+      renderDetail();
+    });
+    if ($('#d-cook')) $('#d-cook').onclick = () => openCook(r);
+    $$('[data-card-step]', box).forEach((card) => card.addEventListener('click', () => {
+      const i = Number(card.dataset.cardStep);
+      const set = new Set(r._done || []);
+      set.has(i) ? set.delete(i) : set.add(i);
+      r._done = [...set]; save(); renderDetail();
+    }));
+    $$('[data-flow]', box).forEach((f) => f.onclick = () => {
+      const card = box.querySelector(`[data-card-step="${f.dataset.flow}"]`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
     $$('input[data-step]', box).forEach((cb) => cb.addEventListener('change', () => {
       const i = Number(cb.dataset.step);
       const set = new Set(r._done || []);
