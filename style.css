@@ -61,6 +61,54 @@
 .theme-toggle .sw { width: 10px; height: 10px; border-radius: 50%; }
 .theme-toggle .sw.bean { background: #8a6d3b; }
 .theme-toggle .sw.green { background: #3a7044; }
+.theme-toggle .sw.navy { background: linear-gradient(135deg, #1b2a4a, #3fd0c0); }
+
+/* 네이비 테마 — 짙은 남색 + 청록 강조, 카드에 은은한 그라데이션 (시스템 다크 설정과 무관하게 항상 어두움) */
+:root[data-theme="navy"] {
+  color-scheme: dark;
+  --bg: #0a1020;
+  --surface: #121a2c;
+  --ink: #e6ebf5;
+  --muted: #8f9bb3;
+  --line: #243049;
+  --accent: #3fd0c0;
+  --accent-ink: #062320;
+  --soft: #19233a;
+  --danger: #ff7d6e;
+  --shadow: 0 4px 18px rgba(0, 0, 0, .35);
+  --art-bg: #e1e8f2;
+  --hot: #ff9f80;
+  --hot-bg: #3a2322;
+  --grad-card: linear-gradient(160deg, #19243b 0%, #10182a 100%);
+  --grad-soft: linear-gradient(160deg, #1c2842 0%, #141d31 100%);
+  --grad-glow: linear-gradient(135deg, rgba(63, 208, 192, .16) 0%, rgba(24, 36, 60, .6) 55%, rgba(16, 24, 42, .9) 100%);
+  --grad-accent: linear-gradient(135deg, #2fb8aa 0%, #45d8c8 100%);
+}
+@media screen {
+  :root[data-theme="navy"] body {
+    background: radial-gradient(900px 500px at 0% 0%, #16233f 0%, transparent 60%),
+      radial-gradient(700px 400px at 100% 100%, #0f2a33 0%, transparent 60%), #0a1020;
+    background-attachment: fixed;
+  }
+  /* 상단 바에 backdrop-filter 를 쓰면 안의 모바일 하단 탭바(position: fixed)가 상단 바 기준으로 붙어 버린다 */
+  :root[data-theme="navy"] .topbar { background: rgba(12, 19, 36, .96); }
+  :root[data-theme="navy"] :is(.panel, .sidebar, .ing-card, .step-card, .coag-card, .flow-item, .note-card, .chip, .cook-top, .cook-nav) { background: var(--grad-card); }
+  :root[data-theme="navy"] :is(.stat, .trouble div, .step-key, .cook-key, .seg, .badge, .chip-t) { background: var(--grad-soft); }
+  :root[data-theme="navy"] :is(.hero, .coag-why, .best-card, .coag-card.main, .note-form) {
+    background: var(--grad-glow); border: 1px solid rgba(63, 208, 192, .28);
+  }
+  :root[data-theme="navy"] .coag-why { border-left: 3px solid var(--accent); }
+  :root[data-theme="navy"] .coag-card.main { border-width: 2px; border-color: var(--accent); }
+  :root[data-theme="navy"] :is(.btn:not(.ghost):not(.danger), .recipe-list li.active, .chip.active, .cook-prog i) { background: var(--grad-accent); border-color: transparent; }
+  :root[data-theme="navy"] .tabs button.active { background: var(--grad-soft); color: var(--accent); }
+  :root[data-theme="navy"] .seg button.on, :root[data-theme="navy"] .theme-toggle button[aria-pressed="true"] { background: #243150; }
+  :root[data-theme="navy"] .badge.std { background: #1d2c4a; color: #a9c6ef; }
+  :root[data-theme="navy"] .badge.lab { background: #16332f; color: #9fe3d6; }
+  :root[data-theme="navy"] .cloud-pill.ok { background: #12302c; border-color: #3fd0c0; color: #7fe6d9; }
+  @media (max-width: 760px) {
+    :root[data-theme="navy"] .tabs { background: rgba(12, 19, 36, .95); backdrop-filter: blur(8px); }
+  }
+}
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
