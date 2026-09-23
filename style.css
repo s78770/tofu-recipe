@@ -337,7 +337,31 @@ body.cooking { overflow: hidden; }
 .link { color: var(--accent); cursor: pointer; text-decoration: underline; }
 .note-actions { margin-top: 4px; }
 .row-actions { white-space: nowrap; }
-.install-btn { margin-left: auto; }
+.topbar .logo { margin-right: auto; }
+
+/* ---------- 팀 클라우드 ---------- */
+.cloud-pill {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: .82rem;
+  border-radius: 999px; padding: 4px 12px; cursor: pointer; white-space: nowrap;
+}
+.cloud-pill.ok { border-color: #4f8a3a; background: #e4f3dc; color: #2f6b22; font-weight: 700; }
+.cloud-pill.warn { border-color: var(--accent); color: var(--accent); }
+@media (prefers-color-scheme: dark) { .cloud-pill.ok { color: #9fd08a; } }
+.cloud-panel { margin-bottom: 8px; }
+.cloud-panel code { background: var(--soft); padding: 1px 6px; border-radius: 4px; }
+.cloud-err { background: var(--hot-bg); color: var(--hot); border-radius: 8px; padding: 8px 12px; font-size: .9rem; }
+.cloud-user { display: flex; align-items: center; gap: 10px; margin: 6px 0 12px; }
+.cloud-user img { width: 40px; height: 40px; border-radius: 50%; }
+.cloud-user div { flex: 1; min-width: 0; }
+.cloud-user span { display: block; font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.cloud-mail { font-size: 1.1rem; font-weight: 700; background: var(--soft); border-radius: 8px; padding: 8px 12px; word-break: break-all; }
+.members { list-style: none; padding: 0; margin: 0 0 10px; }
+.members li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px dashed var(--line); word-break: break-all; }
+.members small { color: var(--muted); margin-left: 4px; }
+.members em { font-style: normal; font-size: .8rem; color: var(--accent); font-weight: 700; }
+.member-add { display: flex; gap: 8px; }
+.member-add input { flex: 1; }
+.by { color: var(--muted); font-size: .78rem; white-space: nowrap; }
 
 /* ---------- PC: 넓은 화면 ---------- */
 .tabs .ic { display: none; }

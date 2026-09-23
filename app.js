@@ -32,10 +32,12 @@
   }
 
   let state = load();
-  const save = () => {
+  const saveLocal = () => {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
     catch (e) { alert('저장 실패: 브라우저 저장소를 사용할 수 없습니다.'); }
   };
+  // 로컬에 저장하고, Supabase에 연결돼 있으면 바뀐 항목을 올린다 (sync.js)
+  const save = () => { saveLocal(); const task = window.TofuSync?.push(state); task?.catch?.((e) => console.error('클라우드 저장 실패', e)); };
 
   let selectedId = state.recipes[0]?.id || null;
   const getRecipe = (id) => state.recipes.find((r) => r.id === id);
@@ -561,6 +563,8 @@
     const data = {
       ...(prev || {}),
       id: editingId || uid(),
+      // 새로 작성한 레시피는 연구 레시피로 분류해 클라우드 동기화 대상에 포함한다.
+      builtin: prev ? !!prev.builtin : false,
       name: form.name.value.trim(),
       soyKg: Number(form.soyKg.value) || 8,
       coagulant: form.coagulant.value.trim(),
@@ -643,7 +647,7 @@
         <td class="num">${b.yieldKg ? fmt(b.yieldKg, 1) + 'kg' : '-'}</td>
         <td class="num">${b.yieldKg && b.soyKg ? '×' + fmt(b.yieldKg / b.soyKg, 2) : '-'}</td>
         <td>${'★'.repeat(Number(b.rating) || 0)}</td>
-        <td class="note">${b.variable ? `<b>${esc(b.variable)}</b> ` : ''}${esc(b.coagAmount ? '[' + b.coagAmount + '] ' : '')}${esc(b.notes)}</td>
+        <td class="note">${b.variable ? `<b>${esc(b.variable)}</b> ` : ''}${esc(b.coagAmount ? '[' + b.coagAmount + '] ' : '')}${esc(b.notes)}${b.updatedBy ? ` <span class="by">✍ ${esc(b.updatedBy)}</span>` : ''}</td>
         <td class="row-actions"><button class="btn ghost small" data-note-from="batch:${esc(b.id)}" title="노하우로 기록">💡 노하우</button> <button class="btn danger small" data-del="${esc(b.id)}">삭제</button></td>
       </tr>`).join('') : '<tr><td colspan="10" class="empty">아직 기록이 없습니다.</td></tr>';
 
@@ -696,7 +700,8 @@
     e.target.value = '';
   });
   $('#btn-reset').onclick = () => {
-    if (!confirm('연구 레시피를 모두 지우고 표준 레시피만 남깁니다. (제조 기록은 유지) 계속할까요?')) return;
+    const team = window.TofuSync?.connected ? '\n\n⚠️ 팀 클라우드에 연결되어 있어 팀원 모두의 연구 레시피가 삭제됩니다.' : '';
+    if (!confirm('연구 레시피를 모두 지우고 표준 레시피만 남깁니다. (제조 기록은 유지) 계속할까요?' + team)) return;
     state.recipes = defaults(); selectedId = state.recipes[0]?.id || null; save(); refresh();
   };
 
@@ -719,7 +724,7 @@
       <div class="note-top">
         <span class="badge">${esc(n.category)}</span>
         <span class="badge">${esc(STATUS[n.status] || '')}</span>
-        <span class="muted num">${esc(n.date)}</span>
+        <span class="muted num">${n.updatedBy ? '✍ ' + esc(n.updatedBy) + ' · ' : ''}${esc(n.date)}</span>
       </div>
       <strong class="note-title">${esc(n.title)}</strong>
       ${n.content ? `<div class="note-body">${esc(n.content)}</div>` : ''}
@@ -850,11 +855,40 @@
 
   // ---------- 시작 ----------
   function refresh() {
-    renderList(); renderDetail();
+    renderList();
+    if (!cook) renderDetail();
     if ($('#tab-calc').classList.contains('active')) renderCalc();
     if ($('#tab-batches').classList.contains('active')) renderBatches();
+    if ($('#tab-notes').classList.contains('active') && $('#note-form').hidden) renderNotes();
   }
   refresh();
+
+  // ---------- sync.js 에서 쓰는 연결점 ----------
+  window.TofuApp = {
+    getState: () => state,
+    // 클라우드에서 받은 목록으로 교체 (표준 레시피는 코드 기준, 작업 체크 표시는 기기별로 유지)
+    applyRemote(kind, items) {
+      if (kind === 'recipes') {
+        const doneMap = new Map(state.recipes.map((r) => [r.id, r._done]));
+        items.forEach((r) => { if (doneMap.get(r.id)) r._done = doneMap.get(r.id); });
+        state.recipes = [...defaults(), ...items];
+        if (selectedId !== '__compare' && !getRecipe(selectedId)) selectedId = state.recipes[0]?.id || null;
+      } else {
+        state[kind] = items;
+      }
+      saveLocal();
+      if (!$('#recipe-dialog').open) refresh();
+    },
+    download: (name) => downloadBackup(name),
+  };
+  function downloadBackup(name) {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name || `tofu-recipes-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
   const initial = location.hash.slice(1);
   if (['recipes', 'calc', 'batches', 'notes', 'settings'].includes(initial)) showTab(initial);
 })();

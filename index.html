@@ -4,19 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#8a6d3b">
-  <meta name="description" content="콩 1말(8kg) 기준 두부 레시피 관리 - 표준 레시피, 연구 레시피, 제조 기록">
+  <meta name="description" content="콩 1말(8kg) 기준 두부 카세 레시피 관리 - 표준 레시피, 연구 레시피, 제조 기록">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>두부 레시피 관리</title>
+  <title>두부 카세 레시피 관리</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
-    <h1 class="logo">豆腐 <span>두부 레시피 관리</span></h1>
+    <h1 class="logo">豆腐 <span>두부 카세 레시피 관리</span></h1>
     <button class="btn small install-btn" id="btn-install" hidden>📲 앱 설치</button>
+    <button class="cloud-pill" id="cloud-pill" hidden></button>
     <nav class="tabs">
       <button data-tab="recipes" class="active"><span class="ic">📖</span><span>레시피</span></button>
       <button data-tab="calc"><span class="ic">⚖️</span><span>계산기</span></button>
@@ -148,7 +149,10 @@
     <!-- 백업 -->
     <section id="tab-settings" class="tab">
       <div class="panel">
-        <h2>백업 / 복원</h2>
+        <h2>☁️ 팀 클라우드 (Supabase)</h2>
+        <div id="cloud-panel" class="cloud-panel"><p class="muted">불러오는 중…</p></div>
+
+        <h2 style="margin-top:1.6em">백업 / 복원</h2>
         <p class="muted">레시피·제조 기록·노하우는 이 브라우저(localStorage)에 저장됩니다. PC와 휴대폰은 저장소가 따로이므로 다른 기기로 옮기거나 백업하려면 JSON으로 내보내세요.</p>
         <div class="actions">
           <button class="btn" id="btn-export">JSON 내보내기</button>
@@ -190,9 +194,16 @@
     </form>
   </dialog>
 
-  <footer class="footer">콩 1말(8kg) 기준 두부 레시피 관리 · 데이터는 브라우저에만 저장됩니다</footer>
+  <footer class="footer">콩 1말(8kg) 기준 두부 카세 레시피 관리 · Supabase 설정 시 팀 클라우드 동기화</footer>
   <script src="data/standard-recipes.js"></script>
   <script src="illustrations.js"></script>
   <script src="app.js"></script>
+  <script src="supabase-config.js"></script>
+  <script type="module" src="sync.js?v=6"></script>
+  <script>
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
+    }
+  </script>
 </body>
 </html>
