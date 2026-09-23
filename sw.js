@@ -1,5 +1,5 @@
 // 네트워크 우선, 실패 시 캐시 — 업데이트는 바로 반영되고 오프라인(작업장)에서도 열림
-const CACHE = 'tofu-recipe-v11';
+const CACHE = 'tofu-recipe-v12';
 const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'illustrations.js', 'sync.js', 'supabase-config.js',
   'data/standard-recipes.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png'];
 const SDK_HOST = 'www.gstatic.com';
