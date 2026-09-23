@@ -240,6 +240,11 @@ details summary { cursor: pointer; color: var(--accent); }
 .coag-card.main .coag-name::after { content: ' · 기본'; color: var(--accent); font-weight: 700; }
 .coag-name { font-size: .82rem; }
 .coag-card b { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.coag-card details p { margin: 4px 0; }
+.coag-card details p b { font-size: inherit; color: var(--ink); }
+.coag-uses { font-size: .78rem; line-height: 1.4; }
+.coag-why { background: var(--soft); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; margin: 0 0 10px; font-size: .9rem; line-height: 1.5; }
+.coag-why b { color: var(--accent); margin-right: 4px; }
 
 .chips-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .chips-row.center { justify-content: center; }

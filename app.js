@@ -88,8 +88,14 @@
       </tbody></table></div>`;
   }
 
+  // 응고제 특징·사용처 (data/standard-recipes.js 의 COAGULANT_INFO)
+  const coagInfo = (name) => (window.COAGULANT_INFO || []).find((x) => String(name || '').includes(x.match));
+  const coagWhy = (r) => r.coagulantWhy || (r.baseId && getRecipe(r.baseId)?.coagulantWhy) || '';
+  const coagWhyBlock = (r) => coagWhy(r) ? `<p class="coag-why"><b>왜 ${esc(r.coagulant)}인가?</b> ${esc(coagWhy(r))}</p>` : '';
+
   function coagTable(r, soyKg) {
     if (!r.coagulantOptions?.length) return '';
+    const infos = r.coagulantOptions.map((c) => [c, coagInfo(c.name)]).filter(([, i]) => i);
     return `<h3>응고제별 사용량 (콩 ${fmt(soyKg, 1)}kg)</h3>
       <div class="table-wrap"><table class="table">
       <thead><tr><th>응고제</th><th>사용량</th><th>희석</th><th>투입 온도</th></tr></thead>
@@ -98,7 +104,16 @@
         <td class="num">${fmt(Number(c.amountPerKgSoy) * soyKg, 1)} ${esc(c.unit)}</td>
         <td class="note">${esc(c.dilution)}</td>
         <td class="num">${esc(c.addTempC)}</td></tr>`).join('')}
-      </tbody></table></div>`;
+      </tbody></table></div>
+      ${coagWhyBlock(r)}
+      ${infos.length ? `<h3>응고제 특징·사용처</h3>
+      <div class="table-wrap"><table class="table">
+      <thead><tr><th>응고제</th><th>굳는 속도</th><th>특징</th><th>맛</th><th>사용처</th><th>주의</th></tr></thead>
+      <tbody>${infos.map(([c, i]) => `
+        <tr><td>${esc(c.name)}</td><td>${esc(i.speed)}</td>
+        <td class="note">${esc(i.feature)}</td><td class="note">${esc(i.taste)}</td>
+        <td class="note">${esc(i.uses)}</td><td class="note">${esc(i.caution)}</td></tr>`).join('')}
+      </tbody></table></div>` : ''}`;
   }
 
   // 표준 목표값 (Brix, 응고 온도 등) — 연구 레시피는 기반 표준의 값과 비교
@@ -189,13 +204,16 @@
   function coagCards(r) {
     if (!r.coagulantOptions?.length) return '';
     return `<h3>응고제 선택 <span class="muted">콩 ${fmt(r.soyKg, 1)}kg 기준</span></h3>
-      <div class="coag-cards">${r.coagulantOptions.map((c) => `
+      ${coagWhyBlock(r)}
+      <div class="coag-cards">${r.coagulantOptions.map((c) => { const i = coagInfo(c.name); return `
         <div class="coag-card ${r.coagulant && c.name.includes(r.coagulant.slice(0, 2)) ? 'main' : ''}">
           <span class="coag-name">${esc(c.name)}</span>
           <b>${fmt(Number(c.amountPerKgSoy) * r.soyKg, 1)}<small>${esc(c.unit)}</small></b>
           <span class="chip-t">🌡 ${esc(c.addTempC)}${/℃/.test(c.addTempC || '') ? '' : '℃'}</span>
+          ${i ? `<span class="coag-uses">📌 ${esc(i.uses)}</span>` : ''}
+          ${i ? `<details><summary>특징·맛·주의</summary><p><b>굳는 속도</b> ${esc(i.speed)}</p><p>${esc(i.feature)}</p><p><b>맛</b> ${esc(i.taste)}</p><p><b>주의</b> ${esc(i.caution)}</p></details>` : ''}
           ${c.dilution ? `<details><summary>희석 방법</summary>${esc(c.dilution)}</details>` : ''}
-        </div>`).join('')}</div>`;
+        </div>`; }).join('')}</div>`;
   }
 
   function stepCards(r, done) {
