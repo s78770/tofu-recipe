@@ -11,7 +11,7 @@
   <title>두부 카세 레시피 관리</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=10">
   <script>
     // 저장된 색 테마를 화면이 그려지기 전에 적용 (깜빡임 방지)
     try { if (localStorage.getItem('tofu-theme') === 'green') document.documentElement.dataset.theme = 'green'; } catch (e) { /* 무시 */ }
@@ -203,11 +203,11 @@
   </dialog>
 
   <footer class="footer">콩 1말(8kg) 기준 두부 카세 레시피 관리 · Supabase 설정 시 팀 클라우드 동기화</footer>
-  <script src="data/standard-recipes.js"></script>
-  <script src="illustrations.js"></script>
-  <script src="app.js"></script>
-  <script src="supabase-config.js"></script>
-  <script type="module" src="sync.js?v=6"></script>
+  <script src="data/standard-recipes.js?v=10"></script>
+  <script src="illustrations.js?v=10"></script>
+  <script src="app.js?v=10"></script>
+  <script src="supabase-config.js?v=10"></script>
+  <script type="module" src="sync.js?v=10"></script>
   <script>
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
       window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
