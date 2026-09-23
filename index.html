@@ -12,10 +12,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // 저장된 색 테마를 화면이 그려지기 전에 적용 (깜빡임 방지)
+    try { if (localStorage.getItem('tofu-theme') === 'green') document.documentElement.dataset.theme = 'green'; } catch (e) { /* 무시 */ }
+  </script>
 </head>
 <body>
   <header class="topbar">
     <h1 class="logo">豆腐 <span>두부 카세 레시피 관리</span></h1>
+    <div class="theme-toggle" role="group" aria-label="색 테마">
+      <button type="button" data-theme-set="bean" aria-pressed="true"><i class="sw bean"></i>콩</button>
+      <button type="button" data-theme-set="green" aria-pressed="false"><i class="sw green"></i>그린</button>
+    </div>
     <button class="btn small install-btn" id="btn-install" hidden>📲 앱 설치</button>
     <button class="cloud-pill" id="cloud-pill" hidden></button>
     <nav class="tabs">

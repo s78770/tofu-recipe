@@ -871,6 +871,18 @@
     if (['recipes', 'calc', 'batches', 'notes', 'settings'].includes(t) && !$('#tab-' + t).classList.contains('active')) showTab(t);
   });
 
+  // ---------- 색 테마 (콩 / 그린) ----------
+  const THEME_COLOR = { bean: '#8a6d3b', green: '#3a7044' };
+  function setTheme(t) {
+    if (t === 'green') document.documentElement.dataset.theme = 'green';
+    else delete document.documentElement.dataset.theme;
+    $$('[data-theme-set]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeSet === t)));
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[t]);
+    try { localStorage.setItem('tofu-theme', t); } catch (e) { /* 무시 */ }
+  }
+  $$('[data-theme-set]').forEach((b) => b.addEventListener('click', () => setTheme(b.dataset.themeSet)));
+  setTheme(document.documentElement.dataset.theme === 'green' ? 'green' : 'bean');
+
   // ---------- 시작 ----------
   function refresh() {
     renderList();
