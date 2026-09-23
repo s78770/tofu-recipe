@@ -2,7 +2,12 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#8a6d3b">
+  <meta name="description" content="콩 1말(8kg) 기준 두부 레시피 관리 - 표준 레시피, 연구 레시피, 제조 기록">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <title>두부 레시피 관리</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
@@ -11,11 +16,13 @@
 <body>
   <header class="topbar">
     <h1 class="logo">豆腐 <span>두부 레시피 관리</span></h1>
+    <button class="btn small install-btn" id="btn-install" hidden>📲 앱 설치</button>
     <nav class="tabs">
-      <button data-tab="recipes" class="active">레시피</button>
-      <button data-tab="calc">배합 계산기</button>
-      <button data-tab="batches">제조 기록</button>
-      <button data-tab="settings">백업</button>
+      <button data-tab="recipes" class="active"><span class="ic">📖</span><span>레시피</span></button>
+      <button data-tab="calc"><span class="ic">⚖️</span><span>계산기</span></button>
+      <button data-tab="batches"><span class="ic">📝</span><span>제조 기록</span></button>
+      <button data-tab="notes"><span class="ic">💡</span><span>노하우</span></button>
+      <button data-tab="settings"><span class="ic">💾</span><span>백업</span></button>
     </nav>
   </header>
 
@@ -96,16 +103,65 @@
       </div>
     </section>
 
+    <!-- 연구 노하우 -->
+    <section id="tab-notes" class="tab">
+      <div class="panel">
+        <div class="detail-head">
+          <h2>연구 노하우</h2>
+          <button class="btn small" id="btn-new-note">+ 노하우 기록</button>
+        </div>
+        <p class="muted">제조하면서 알게 된 요령, 실패 원인, 가설과 검증 결과를 쌓아 두세요. 레시피·제조 기록과 연결할 수 있습니다.</p>
+        <form id="note-form" class="grid-form note-form" hidden>
+          <label class="full">제목 <input name="title" required placeholder="예: 겨울엔 간수 투입 온도를 78℃로 올려야 잘 굳음"></label>
+          <label>분류
+            <select name="category">
+              <option>불림</option><option>마쇄</option><option>가열·소포</option><option>비지 짜기</option>
+              <option>응고</option><option>성형·압착</option><option>수율</option><option>품질·맛</option>
+              <option>장비·위생</option><option>원료콩</option><option>기타</option>
+            </select>
+          </label>
+          <label>검증 상태
+            <select name="status">
+              <option value="hypothesis">💭 가설</option>
+              <option value="testing">🔬 검증 중</option>
+              <option value="verified">✅ 검증됨</option>
+              <option value="failed">❌ 효과 없음</option>
+            </select>
+          </label>
+          <label>관련 레시피 <select name="recipeId" id="note-recipe"></select></label>
+          <label>관련 제조 기록 <select name="batchId" id="note-batch"></select></label>
+          <label class="full">내용 <textarea name="content" rows="5" placeholder="상황, 한 일, 결과, 수치(온도·시간·양)를 구체적으로"></textarea></label>
+          <label class="full">태그 (쉼표로 구분) <input name="tags" placeholder="예: 겨울, 간수, 식감"></label>
+          <div class="full actions end">
+            <button type="button" class="btn ghost" id="btn-note-cancel">취소</button>
+            <button type="submit" class="btn">저장</button>
+          </div>
+        </form>
+        <div class="note-filter">
+          <input type="search" id="note-search" placeholder="🔍 제목·내용·태그 검색">
+          <div id="note-cats" class="chips"></div>
+        </div>
+        <div id="note-list" class="note-list"></div>
+      </div>
+    </section>
+
     <!-- 백업 -->
     <section id="tab-settings" class="tab">
       <div class="panel">
         <h2>백업 / 복원</h2>
-        <p class="muted">데이터는 이 브라우저(localStorage)에 저장됩니다. 다른 기기로 옮기거나 백업하려면 JSON으로 내보내세요.</p>
+        <p class="muted">레시피·제조 기록·노하우는 이 브라우저(localStorage)에 저장됩니다. PC와 휴대폰은 저장소가 따로이므로 다른 기기로 옮기거나 백업하려면 JSON으로 내보내세요.</p>
         <div class="actions">
           <button class="btn" id="btn-export">JSON 내보내기</button>
           <label class="btn ghost file-btn">JSON 가져오기<input type="file" id="file-import" accept="application/json" hidden></label>
           <button class="btn danger" id="btn-reset">기본 레시피로 초기화</button>
         </div>
+        <h2 style="margin-top:1.6em">📲 앱으로 설치하기</h2>
+        <ul class="tips">
+          <li><b>안드로이드 (크롬)</b>: 상단의 <b>📲 앱 설치</b> 버튼, 또는 크롬 메뉴(⋮) → <b>홈 화면에 추가 / 앱 설치</b></li>
+          <li><b>PC (크롬·엣지)</b>: 주소창 오른쪽의 설치 아이콘(⊕) 또는 상단의 <b>📲 앱 설치</b> 버튼</li>
+          <li><b>아이폰 (사파리)</b>: 공유 버튼 → <b>홈 화면에 추가</b></li>
+          <li>설치하면 주소창 없이 앱처럼 열리고, 인터넷이 없는 작업장에서도 열립니다.</li>
+        </ul>
       </div>
     </section>
   </main>

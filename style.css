@@ -27,6 +27,8 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+label > input, label > select, label > textarea { width: 100%; }
 body {
   margin: 0;
   background: var(--bg);
@@ -186,7 +188,165 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
 .empty { color: var(--muted); text-align: center; padding: 40px 0; }
 .footer { text-align: center; color: var(--muted); font-size: .8rem; padding: 20px; }
 
+/* ---------- 연구 노하우 ---------- */
+.note-form { border: 1px solid var(--accent); border-radius: 8px; padding: 14px; background: var(--soft); }
+.note-form[hidden] { display: none; }
+.note-filter { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.note-filter input { width: 100%; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.chip {
+  flex: 0 0 auto; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 999px; padding: 4px 12px; font: inherit; font-size: .85rem; cursor: pointer;
+}
+.chip.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.note-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 10px; }
+.note-card {
+  border: 1px solid var(--line); border-left: 4px solid var(--muted); border-radius: 8px;
+  padding: 10px 12px; background: var(--surface); display: flex; flex-direction: column; gap: 4px; min-width: 0;
+}
+.note-card.status-verified { border-left-color: #4f8a3a; }
+.note-card.status-testing { border-left-color: #c58a1c; }
+.note-card.status-failed { border-left-color: var(--danger); }
+.note-top { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.note-top .muted { margin-left: auto; font-size: .8rem; }
+.note-title { font-size: .98rem; }
+.note-body { white-space: pre-wrap; font-size: .9rem; overflow-wrap: anywhere; }
+.note-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: .8rem; }
+.tag { color: var(--accent); }
+.link { color: var(--accent); cursor: pointer; text-decoration: underline; }
+.note-actions { margin-top: 4px; }
+.row-actions { white-space: nowrap; }
+.install-btn { margin-left: auto; }
+
+/* ---------- PC: 넓은 화면 ---------- */
+.tabs .ic { display: none; }
+@media (min-width: 761px) {
+  .sidebar { position: sticky; top: 76px; max-height: calc(100vh - 96px); overflow-y: auto; }
+  .steps label.chk input { width: 18px; height: 18px; }
+}
+@media (min-width: 1400px) {
+  main { max-width: 1320px; }
+  .layout { grid-template-columns: 300px 1fr; }
+}
+
+/* ---------- 태블릿 / 모바일 ---------- */
+@media (max-width: 760px) {
+  body { font-size: 15px; padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+  .topbar { padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top)); }
+  .logo { font-size: 1.15rem; }
+
+  /* 하단 탭바 (안드로이드 앱 스타일) */
+  .tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+    background: var(--surface); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, .06);
+  }
+  .tabs button {
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+    border-radius: 0; padding: 7px 4px 6px; font-size: .75rem; min-height: 56px;
+  }
+  .tabs button .ic { display: block; font-size: 1.25rem; line-height: 1.3; }
+  .tabs button.active { background: none; color: var(--accent); }
+  .tabs button.active .ic { transform: scale(1.1); }
+
+  main { padding: 12px 12px 24px; }
+  .panel { padding: 16px 14px; }
+  .layout { gap: 12px; }
+
+  /* 레시피 목록을 가로 스크롤 칩으로 */
+  .sidebar { padding: 10px 12px; }
+  .sidebar-head { margin-bottom: 6px; }
+  .recipe-list {
+    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
+    scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch;
+  }
+  .recipe-list li {
+    flex: 0 0 auto; max-width: 240px; scroll-snap-align: start;
+    border: 1px solid var(--line); margin: 0; padding: 8px 12px; font-size: .9rem;
+  }
+  .recipe-list li.group { border: 0; padding: 8px 2px; align-self: center; }
+  .recipe-list li.muted { border-style: dashed; white-space: normal; max-width: 180px; }
+  .recipe-list li small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  h2 { font-size: 1.15rem; }
+  .detail-head .actions { width: 100%; }
+  .detail-head .actions .btn { flex: 1 1 auto; justify-content: center; }
+
+  /* 터치 영역 확대 + 입력 시 확대 방지 */
+  .btn { min-height: 42px; }
+  .btn.small { min-height: 36px; padding: 6px 12px; }
+  input, select, textarea { font-size: 16px; min-height: 44px; }
+  textarea { min-height: 0; }
+
+  .grid-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  .grid-form .wide { grid-column: 1 / -1; }
+  .grid-form .actions .btn { width: 100%; justify-content: center; }
+  .form-row { flex-direction: column; align-items: stretch; }
+  .quick { display: grid; grid-template-columns: 1fr 1fr; }
+  .quick .btn { justify-content: center; }
+
+  .stats { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { padding: 8px 12px; }
+  .stat b { font-size: 1.1rem; }
+  .targets .stats { grid-template-columns: 1fr 1fr; }
+  .targets .stat b { font-size: .92rem; }
+
+  .steps li { padding: 10px 40px 10px 44px; }
+  .steps label.chk { right: 4px; }
+  .steps label.chk input { width: 22px; height: 22px; min-height: 0; }
+
+  /* 표 → 카드 */
+  .table thead { display: none; }
+  .table, .table tbody, .table tr, .table td { display: block; width: 100%; }
+  .table tr {
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 12px; margin-bottom: 8px; background: var(--surface);
+  }
+  .table td {
+    display: flex; justify-content: space-between; gap: 12px;
+    border: 0; padding: 4px 0; text-align: right; white-space: normal;
+  }
+  .table td::before {
+    content: attr(data-label); color: var(--muted); font-size: .8rem;
+    text-align: left; flex: 0 0 auto; max-width: 40%;
+  }
+  .table td:first-child { font-weight: 700; }
+  .table td.note { display: block; text-align: left; }
+  .table td.note::before { display: block; margin-bottom: 2px; }
+  .table td:not([data-label])::before, .table td[data-label=""]::before { display: none; }
+  .table td:last-child:has(.btn) { justify-content: flex-end; }
+  .table td.empty { justify-content: center; }
+  .best-row { border-color: var(--accent) !important; }
+
+  /* 편집 창: 전체 화면 */
+  dialog {
+    width: 100vw; max-width: 100vw; height: 100%; max-height: 100%;
+    margin: 0; border: 0; border-radius: 0; padding: 16px 14px calc(16px + env(safe-area-inset-bottom));
+  }
+  dialog .actions.end {
+    position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom)); margin: 16px -14px 0;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: var(--surface); border-top: 1px solid var(--line);
+  }
+  dialog .actions.end .btn { flex: 1; justify-content: center; }
+  .row {
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px;
+  }
+  .row.ing { grid-template-columns: 1fr 90px 40px; grid-template-areas: "a a x" "b c c" "d d d"; }
+  .row.step { grid-template-columns: 1fr 1fr 40px; grid-template-areas: "a a x" "b c c" "d d d"; }
+  .row > :nth-child(1) { grid-area: a; }
+  .row > :nth-child(2) { grid-area: b; }
+  .row > :nth-child(3) { grid-area: c; }
+  .row > :nth-child(4) { grid-area: d; }
+  .row > button { grid-area: x; min-height: 44px; }
+
+  .footer { padding: 12px 16px; }
+}
+
 @media print {
+  .tabs .ic { display: none !important; }
   .topbar, .sidebar, .footer, .no-print { display: none !important; }
   .layout { display: block; }
   body { background: #fff; }

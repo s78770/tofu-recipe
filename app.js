@@ -28,7 +28,7 @@
       if (raw) saved = JSON.parse(raw);
     } catch (e) { /* 손상된 데이터는 무시하고 기본값 사용 */ }
     const own = (saved?.recipes || []).filter((r) => !r.builtin);
-    return { recipes: [...defaults(), ...own], batches: saved?.batches || [] };
+    return { recipes: [...defaults(), ...own], batches: saved?.batches || [], notes: saved?.notes || [] };
   }
 
   let state = load();
@@ -48,6 +48,8 @@
     if (name === 'recipes') { renderList(); renderDetail(); }
     if (name === 'calc') renderCalc();
     if (name === 'batches') renderBatches();
+    if (name === 'notes') renderNotes();
+    window.scrollTo(0, 0);
     location.hash = name;
   }
 
@@ -135,6 +137,7 @@
     const base = r.baseId ? getRecipe(r.baseId) : null;
     const myBatches = state.batches.filter((b) => b.recipeId === r.id);
     const bestBatch = myBatches.find((b) => b.id === r.bestBatchId);
+    const relNotes = state.notes.filter((n) => n.recipeId === r.id || myBatches.some((b) => b.id === n.batchId));
 
     box.innerHTML = `
       <div class="detail-head">
@@ -188,6 +191,9 @@
       </ol>
 
       ${r.tips?.length ? `<h3>팁</h3><ul class="tips">${r.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+
+      <h3>💡 관련 노하우 (${relNotes.length}) <button class="btn ghost small no-print" data-note-from="recipe:${esc(r.id)}">+ 기록</button></h3>
+      ${relNotes.length ? `<div class="note-list">${relNotes.map((n) => noteCard(n, true)).join('')}</div>` : '<p class="muted">이 레시피와 연결된 노하우가 없습니다.</p>'}
 
       ${r.troubleshooting?.length ? `<h3>문제 해결</h3><div class="trouble">${r.troubleshooting.map((t) => `
         <div><strong>${esc(t.problem)}</strong><br>원인: ${esc(t.cause)}<br>해결: ${esc(t.fix)}</div>`).join('')}</div>` : ''}
@@ -357,7 +363,10 @@
   bform.date.valueAsDate = new Date();
 
   function renderBatches() {
-    fillRecipeSelect($('#batch-recipe'));
+    const bsel = $('#batch-recipe');
+    const first = !bsel.options.length;
+    fillRecipeSelect(bsel);
+    if (first && getRecipe(selectedId)) bsel.value = selectedId;
     const list = [...state.batches].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     const withYield = list.filter((b) => b.yieldKg && b.soyKg);
     const avgRatio = withYield.length ? withYield.reduce((s, b) => s + b.yieldKg / b.soyKg, 0) / withYield.length : null;
@@ -381,7 +390,7 @@
         <td class="num">${b.yieldKg && b.soyKg ? '×' + fmt(b.yieldKg / b.soyKg, 2) : '-'}</td>
         <td>${'★'.repeat(Number(b.rating) || 0)}</td>
         <td class="note">${b.variable ? `<b>${esc(b.variable)}</b> ` : ''}${esc(b.coagAmount ? '[' + b.coagAmount + '] ' : '')}${esc(b.notes)}</td>
-        <td><button class="btn danger small" data-del="${esc(b.id)}">삭제</button></td>
+        <td class="row-actions"><button class="btn ghost small" data-note-from="batch:${esc(b.id)}" title="노하우로 기록">💡 노하우</button> <button class="btn danger small" data-del="${esc(b.id)}">삭제</button></td>
       </tr>`).join('') : '<tr><td colspan="10" class="empty">아직 기록이 없습니다.</td></tr>';
 
     $$('[data-del]', $('#batch-list')).forEach((btn) => btn.addEventListener('click', () => {
@@ -426,7 +435,7 @@
       const data = JSON.parse(await f.text());
       if (!Array.isArray(data.recipes) || !Array.isArray(data.batches)) throw new Error('형식 오류');
       if (!confirm('현재 데이터를 가져온 파일로 덮어쓸까요?')) return;
-      state = { recipes: [...defaults(), ...data.recipes.filter((r) => !r.builtin)], batches: data.batches };
+      state = { recipes: [...defaults(), ...data.recipes.filter((r) => !r.builtin)], batches: data.batches, notes: data.notes || [] };
       selectedId = state.recipes[0]?.id || null; save(); refresh();
       alert('가져오기 완료');
     } catch (err) { alert('가져오기 실패: ' + err.message); }
@@ -437,6 +446,154 @@
     state.recipes = defaults(); selectedId = state.recipes[0]?.id || null; save(); refresh();
   };
 
+  // ---------- 연구 노하우 ----------
+  const STATUS = {
+    hypothesis: '💭 가설', testing: '🔬 검증 중', verified: '✅ 검증됨', failed: '❌ 효과 없음',
+  };
+  const nform = $('#note-form');
+  let editingNoteId = null;
+  let noteCat = '전체';
+
+  function batchLabel(b) {
+    return `${b.date} · ${getRecipe(b.recipeId)?.name || b.recipeName || ''}${b.variable ? ' · ' + b.variable : ''}`;
+  }
+
+  function noteCard(n, compact = false) {
+    const r = getRecipe(n.recipeId);
+    const b = state.batches.find((x) => x.id === n.batchId);
+    return `<div class="note-card status-${esc(n.status)}">
+      <div class="note-top">
+        <span class="badge">${esc(n.category)}</span>
+        <span class="badge">${esc(STATUS[n.status] || '')}</span>
+        <span class="muted num">${esc(n.date)}</span>
+      </div>
+      <strong class="note-title">${esc(n.title)}</strong>
+      ${n.content ? `<div class="note-body">${esc(n.content)}</div>` : ''}
+      <div class="note-meta">
+        ${(n.tags || []).map((t) => `<span class="tag">#${esc(t)}</span>`).join('')}
+        ${!compact && r ? `<span class="link" data-goto-recipe="${esc(r.id)}">📖 ${esc(r.name)}</span>` : ''}
+        ${b ? `<span class="muted">📝 ${esc(batchLabel(b))}</span>` : ''}
+      </div>
+      ${compact ? '' : `<div class="actions end note-actions">
+        <button class="btn ghost small" data-note-edit="${esc(n.id)}">수정</button>
+        <button class="btn danger small" data-note-del="${esc(n.id)}">삭제</button>
+      </div>`}
+    </div>`;
+  }
+
+  function renderNotes() {
+    const rs = $('#note-recipe');
+    rs.innerHTML = '<option value="">(없음)</option>' + state.recipes.map((r) => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+    const bs = $('#note-batch');
+    bs.innerHTML = '<option value="">(없음)</option>' + [...state.batches].reverse().map((b) => `<option value="${esc(b.id)}">${esc(batchLabel(b))}</option>`).join('');
+
+    const cats = ['전체', ...new Set(state.notes.map((n) => n.category))];
+    if (!cats.includes(noteCat)) noteCat = '전체';
+    $('#note-cats').innerHTML = cats.map((c) => `<button class="chip ${c === noteCat ? 'active' : ''}" data-cat="${esc(c)}">${esc(c)}${c === '전체' ? ` ${state.notes.length}` : ''}</button>`).join('');
+    $$('[data-cat]').forEach((b) => b.onclick = () => { noteCat = b.dataset.cat; renderNotes(); });
+
+    const q = $('#note-search').value.trim().toLowerCase();
+    const list = state.notes
+      .filter((n) => noteCat === '전체' || n.category === noteCat)
+      .filter((n) => !q || [n.title, n.content, ...(n.tags || [])].join(' ').toLowerCase().includes(q))
+      .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
+
+    $('#note-list').innerHTML = list.length ? list.map((n) => noteCard(n)).join('')
+      : `<p class="empty">${state.notes.length ? '검색 결과가 없습니다.' : '아직 기록한 노하우가 없습니다.'}</p>`;
+
+    $$('[data-note-edit]').forEach((b) => b.onclick = () => openNoteForm(state.notes.find((n) => n.id === b.dataset.noteEdit)));
+    $$('[data-note-del]').forEach((b) => b.onclick = () => {
+      if (!confirm('이 노하우를 삭제할까요?')) return;
+      state.notes = state.notes.filter((n) => n.id !== b.dataset.noteDel); save(); renderNotes();
+    });
+    $$('[data-goto-recipe]').forEach((el) => el.onclick = () => { selectedId = el.dataset.gotoRecipe; showTab('recipes'); });
+  }
+
+  function openNoteForm(n, preset = {}) {
+    renderNotes();
+    editingNoteId = n?.id || null;
+    const v = { category: '응고', status: 'hypothesis', ...preset, ...(n || {}) };
+    nform.title.value = v.title || '';
+    nform.category.value = v.category;
+    nform.status.value = v.status;
+    nform.recipeId.value = v.recipeId || '';
+    nform.batchId.value = v.batchId || '';
+    nform.content.value = v.content || '';
+    nform.tags.value = (v.tags || []).join(', ');
+    nform.hidden = false;
+    nform.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    nform.title.focus({ preventScroll: true });
+  }
+
+  $('#btn-new-note').onclick = () => openNoteForm(null);
+  $('#btn-note-cancel').onclick = () => { nform.hidden = true; };
+  $('#note-search').addEventListener('input', renderNotes);
+  nform.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const prev = state.notes.find((n) => n.id === editingNoteId);
+    const data = {
+      id: editingNoteId || uid(),
+      date: prev?.date || new Date().toISOString().slice(0, 10),
+      createdAt: prev?.createdAt || Date.now(),
+      title: nform.title.value.trim(),
+      category: nform.category.value,
+      status: nform.status.value,
+      recipeId: nform.recipeId.value || null,
+      batchId: nform.batchId.value || null,
+      content: nform.content.value.trim(),
+      tags: nform.tags.value.split(',').map((t) => t.trim().replace(/^#/, '')).filter(Boolean),
+    };
+    if (prev) Object.assign(prev, data); else state.notes.push(data);
+    save(); nform.hidden = true; renderNotes();
+  });
+
+  // 레시피 상세 · 제조 기록에서 바로 노하우 작성
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-note-from]');
+    if (!t) return;
+    const [kind, id] = t.dataset.noteFrom.split(':');
+    const preset = {};
+    if (kind === 'recipe') preset.recipeId = id;
+    if (kind === 'batch') {
+      const b = state.batches.find((x) => x.id === id);
+      Object.assign(preset, { batchId: id, recipeId: b?.recipeId, title: b?.variable ? b.variable + ' — ' : '', content: b?.notes || '' });
+    }
+    showTab('notes');
+    openNoteForm(null, preset);
+  });
+
+  // ---------- 모바일: 표 셀에 열 제목을 붙여 카드형으로 표시 ----------
+  function labelTables() {
+    $$('table.table').forEach((t) => {
+      const heads = $$('thead th', t).map((th) => th.textContent.trim());
+      $$('tbody tr', t).forEach((tr) => $$('td', tr).forEach((td, i) => {
+        if (heads[i] && td.colSpan === 1) td.dataset.label = heads[i];
+      }));
+    });
+  }
+  new MutationObserver(labelTables).observe($('main'), { childList: true, subtree: true });
+
+  // 안드로이드 홈 화면 설치 / 오프라인 사용
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+  let installEvt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); installEvt = e; $('#btn-install').hidden = false;
+  });
+  $('#btn-install').onclick = async () => {
+    if (!installEvt) return;
+    installEvt.prompt();
+    await installEvt.userChoice;
+    installEvt = null; $('#btn-install').hidden = true;
+  };
+  window.addEventListener('appinstalled', () => { $('#btn-install').hidden = true; });
+  // 안드로이드 뒤로가기: 이전 탭으로 이동
+  window.addEventListener('hashchange', () => {
+    const t = location.hash.slice(1);
+    if (['recipes', 'calc', 'batches', 'notes', 'settings'].includes(t) && !$('#tab-' + t).classList.contains('active')) showTab(t);
+  });
+
   // ---------- 시작 ----------
   function refresh() {
     renderList(); renderDetail();
@@ -445,5 +602,5 @@
   }
   refresh();
   const initial = location.hash.slice(1);
-  if (['recipes', 'calc', 'batches', 'settings'].includes(initial)) showTab(initial);
+  if (['recipes', 'calc', 'batches', 'notes', 'settings'].includes(initial)) showTab(initial);
 })();
